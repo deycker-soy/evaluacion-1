@@ -1,0 +1,185 @@
+!DOCTYPE html>
+<html lang="es">
+<head> 
+    <style>
+    body {
+    font-size: 30px;
+    font-weight: 500;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+#team-input {
+    font-size: 30px;
+    margin-bottom: 30px;
+}
+
+#brackets {
+    font-size: 30px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.bracket {
+    font-size: 30px;
+    border: 4px solid #0018a3;
+    padding: 30px;
+    margin: 30px;
+}
+</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Champions League Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Champions League
+    </h1>
+    <label for="format"> selecciona el campeonato:</label>
+    <select id="format">
+        <option value="8">Cuartos de Final (8 equipos)</option>
+        <option value="16">Octavos de Final (16 equipos)</option>
+    </select>
+
+    <div id="team-input">
+        <h2>Ingresa los equipos:</h2>
+    </div>
+
+    <button id="start-button">Iniciar Torneo</button>
+    <button id="simulate-button" style="display: none;">Simular Resultados</button>
+
+    <div id="brackets">
+    </div>
+
+    <script src="script.js">
+    const formatSelect = document.getElementById('format');
+const teamInput = document.getElementById('team-input');
+const startButton = document.getElementById('start-button');
+const simulateButton = document.getElementById('simulate-button');
+const bracketsDiv = document.getElementById('brackets');
+
+let teams = [];
+let matches = [];
+let currentFormat = '';
+
+// Función para generar campos de entrada de equipos
+function generateTeamInputs(storedFormat) {
+    const numTeams = storedFormat ? parseInt(storedFormat) : parseInt(formatSelect.value);
+    teamInput.innerHTML = '<h2>Ingresa los equipos:</h2>';
+    for (let i = 0; i < numTeams; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Equipo ${i + 1}`;
+        input.id = `team-${i}`; // Añadimos un ID para recuperar los valores guardados
+        teamInput.appendChild(input);
+    }
+    if (storedFormat) {
+        loadTeams(); // Si hay un formato guardado, intentamos cargar los equipos
+    }
+}
+
+// Función para mezclar equipos aleatoriamente (sin cambios)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Función para generar los cruzes del torneo (sin cambios)
+function generateBrackets() {
+    const numTeams = teams.length;
+    matches = [];
+    for (let i = 0; i < numTeams; i += 2) {
+        matches.push([teams[i], teams[i + 1]]);
+    }
+}
+
+// Función para mostrar los cruzes en la interfaz (sin cambios)
+function displayBrackets() {
+    bracketsDiv.innerHTML = '';
+    matches.forEach(match => {
+        const bracketDiv = document.createElement('div');
+        bracketDiv.classList.add('bracket');
+        bracketDiv.innerHTML = `${match[0]} vs ${match[1]}`;
+        bracketsDiv.appendChild(bracketDiv);
+    });
+}
+
+// Función para simular los resultados de los partidos (sin cambios)
+function simulateResults() {
+    const winners = [];
+    matches.forEach(match => {
+        const winner = Math.random() < 0.5 ? match[0] : match[1];
+        winners.push(winner);
+    });
+    teams = winners;
+    generateBrackets();
+    displayBrackets();
+
+    if (teams.length === 1) {
+        alert(`¡El campeón es ${teams[0]}!`);
+        simulateButton.style.display = 'none';
+    }
+    saveData(); // Guardamos los datos después de cada simulación
+}
+
+// Función para guardar los datos en localStorage
+function saveData() {
+    localStorage.setItem('format', currentFormat);
+    const savedTeams = Array.from(teamInput.querySelectorAll('input')).map(input => input.value);
+    localStorage.setItem('teams', JSON.stringify(savedTeams));
+}
+
+// Función para cargar los datos desde localStorage
+function loadData() {
+    const storedFormat = localStorage.getItem('format');
+    const storedTeams = localStorage.getItem('teams');
+
+    if (storedFormat) {
+        formatSelect.value = storedFormat;
+        currentFormat = storedFormat;
+        generateTeamInputs(storedFormat);
+    }
+
+    if (storedTeams) {
+        teams = JSON.parse(storedTeams);
+    }
+}
+
+// Función para cargar los equipos en los campos de entrada
+function loadTeams() {
+    const storedTeams = JSON.parse(localStorage.getItem('teams')) || [];
+    storedTeams.forEach((team, index) => {
+        const inputField = document.getElementById(`team-${index}`);
+        if (inputField) {
+            inputField.value = team;
+        }
+    });
+}
+
+// Event listeners
+formatSelect.addEventListener('change', () => {
+    currentFormat = formatSelect.value;
+    generateTeamInputs();
+    localStorage.removeItem('teams'); // Limpiamos los equipos si cambia el formato
+});
+
+startButton.addEventListener('click', () => {
+    currentFormat = formatSelect.value;
+    teams = Array.from(teamInput.querySelectorAll('input')).map(input => input.value);
+    shuffleArray(teams);
+    generateBrackets();
+    displayBrackets();
+    simulateButton.style.display = 'block';
+    saveData(); // Guardamos los datos al iniciar el torneo
+});
+
+simulateButton.addEventListener('click', simulateResults);
+
+// Cargar datos al cargar la página
+loadData();
+    </script>
+</body>
+</html>
